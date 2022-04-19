@@ -46,7 +46,36 @@ elseif ($response -eq "B".ToUpper()) {
     # Begin (continuosly) monitoring files with saved Baseline
     while ($true) {
         Start-Sleep -Seconds 1
-        Write-Host "Checking if files match..."
+        # Write-Host "Checking if files match..."
+        $files = Get-ChildItem -Path .\Files
+        # For each file, calculate the hash, and compare the hash to the dictionary
+        foreach ($f in $files){
+            $hash = Calculate-File-Hash $f.FullName
+            
+            if ($fileHashDictionary[$hash.Path] -eq $null) {
+                # A new file has been created!
+                Write-Host "$($hash.Path) has been created!" -ForegroundColor Green
+            }
+            else{
+                # Notify when file has been changed
+                if ($fileHashDictionary[$hash.Path] -eq $hash.Hash) {
+                    # The file has not changed
+                }
+                else {
+                    # file has been compromised! Notify user
+                    Write-Host "$($hash.Path) has changed!" -ForegroundColor Yellow
+                }
+            }
+
+            
+        }
+        foreach ($key in $fileHashDictionary.Keys) {
+            $baselineFileStillExists = Test-Path -Path $Key
+            if (-Not $baselineFileStillExists) {
+                # One of the baseline files must have been deleted, notify the user
+                Write-Host "$($key) has been deleted!" -ForegroundColor DarkRed
+            }
+        }
     }
     # Begin monitoring files with saved Baseline
     Write-Host "Read existing baseline.txt, start monitoring files." -ForegroundColor Yellow
